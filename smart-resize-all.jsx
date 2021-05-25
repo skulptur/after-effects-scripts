@@ -1,25 +1,42 @@
 var scriptName = "Scale by Protobacillus";
-var exportCompName = 'export';
-var exportFps = 60;
-var baseSize = [2000, 2000];
-var exportSettings = {
-    'full-hd': {
+
+// SETTINGS
+
+var mainExport = {
+    name: 'export',
+    fps: 60,
+    dimensions: [2000, 2000],
+    duration: 4, // seconds
+};
+var generatedExports = [
+    {
+        name: 'full-hd',
         fps: 60,
         dimensions: [1920, 1080],
+        duration: 4,
     },
-    '4x5': {
+    {
+        name: '4x5',
         fps: 30,
         dimensions: [1080, 1350],
+        duration: 4,
     }
-};
+];
+
+// UTILS
 
 // adobe sucks and starts with index 1
 function getItem (items, index) {
     return items[index + 1];
 }
 
-// so we don't have to keep writing the loops
 function forEach (elements, callback) {
+    for(var i = 0; i < elements.length; i++){
+        callback(elements[i], i);
+    }
+}
+
+function forEachItem (elements, callback) {
     for(var i = 0; i < elements.length; i++){
         callback(getItem(elements, i), i);
     }
@@ -47,7 +64,7 @@ function isFolder (element) {
 // to visit the layers of a comp
 function forEachLayer (element, callback) {
     if (isComp(element)){
-        forEach(element.layers, callback);
+        forEachItem(element.layers, callback);
     }
 }
 
@@ -67,7 +84,7 @@ function scalePosition (element, xFactor, yFactor) {
 }
 
 function recursiveVisit(rootItems, callback) {
-    forEach(rootItems, function(currentItem){
+    forEachItem(rootItems, function(currentItem){
         if(isFolder(currentItem)){
             return recursiveVisit(currentItem.items, callback);
         }
@@ -113,6 +130,12 @@ function byNameOrActive(compName){
     return myComp
 }
 
+function prepareExport(comp, settings){
+    resize(comp, settings.dimensions);
+    setFramerate(comp, settings.fps);
+    comp.name = '@' + settings.name + '_' + settings.dimensions[0] + 'x' + settings.dimensions[1]  + '_' + app.project.file.name;
+}
+
 function protoScale(finalComp){
     if(!finalComp){
         return alert("You need to select the export comp.");
@@ -127,27 +150,22 @@ function protoScale(finalComp){
 
     // resize all items
     recursiveVisit(app.project.items, function(currentItem){
-        resize(currentItem, baseSize);
+        resize(currentItem, mainExport.dimensions);
     });
 
     // this is for the selected item only
     precompLayers(finalComp, 'pre-export');
     
-    // TODO: check that there isn't another one
-    finalComp.name = exportCompName;
-    setFramerate(finalComp, exportFps);
+    // prepare the main export
+    prepareExport(finalComp, mainExport);
 
-    for (var size in exportSettings) {
-        var config = exportSettings[size];
-        var copyComp = finalComp.duplicate();
-        resize(copyComp, config.dimensions);
-        setFramerate(copyComp, config.fps);
-        copyComp.name = '@' + size + '_' + config.dimensions[0] + 'x' + config.dimensions[1]  + '_' + app.project.file.name;
-    }
+    // create specific exports
+    forEach(generatedExports, function(setting){
+        prepareExport(finalComp.duplicate(), setting);
+    })
 
     // end undo group
     app.endUndoGroup();
 }
 
-// protoScale(byNameOrActive(exportCompName));
 protoScale(byNameOrActive(exportCompName));
