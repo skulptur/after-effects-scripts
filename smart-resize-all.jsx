@@ -168,4 +168,4 @@ function protoScale(finalComp){
     app.endUndoGroup();
 }
 
-protoScale(byNameOrActive(exportCompName));
+protoScale(byNameOrActive(mainExport.name));
