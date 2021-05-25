@@ -1,13 +1,17 @@
 var scriptName = "Scale by Protobacillus";
+var exportCompName = 'export';
+var exportFps = 60;
 var baseSize = [2000, 2000];
-var vjLoopSize = [1920, 1080];
-
-// start undo group
-app.beginUndoGroup(scriptName);
-
-// use info panel for debugging
-clearOutput();
-writeLn(scriptName);
+var exportSettings = {
+    'full-hd': {
+        fps: 60,
+        dimensions: [1920, 1080],
+    },
+    '4x5': {
+        fps: 30,
+        dimensions: [1080, 1350],
+    }
+};
 
 // adobe sucks and starts with index 1
 function getItem (items, index) {
@@ -96,21 +100,54 @@ function precompLayers(element, compName){
     }
 }
 
-// resize all items
-recursiveVisit(app.project.items, function(currentItem){
-    resize(currentItem, baseSize);
-});
-
-// these is for the selected item only
-var selectedItem = app.project.activeItem;
-if(selectedItem){
-    precompLayers(selectedItem, 'final-precomp');
-    resize(selectedItem, vjLoopSize);
-    setFramerate(selectedItem, 60);
-    selectedItem.name = '@full-hd_' + app.project.file.name
-}else{
-    alert("You need to select the export comp.");
+// tries to find item by name, falls back to selected item
+function byNameOrActive(compName){
+    var myComp = app.project.activeItem
+    for (var i = 1; i <= app.project.numItems; i ++) {
+        var element = app.project.item(i);
+        if (isComp(element) && (element.name === compName)) {
+            myComp = element;
+            break;
+        }
+    }
+    return myComp
 }
 
-// end undo group
-app.endUndoGroup();
+function protoScale(finalComp){
+    if(!finalComp){
+        return alert("You need to select the export comp.");
+    }
+
+    // start undo group
+    app.beginUndoGroup(scriptName);
+
+    // use info panel for debugging
+    clearOutput();
+    writeLn(scriptName);
+
+    // resize all items
+    recursiveVisit(app.project.items, function(currentItem){
+        resize(currentItem, baseSize);
+    });
+
+    // this is for the selected item only
+    precompLayers(finalComp, 'pre-export');
+    
+    // TODO: check that there isn't another one
+    finalComp.name = exportCompName;
+    setFramerate(finalComp, exportFps);
+
+    for (var size in exportSettings) {
+        var config = exportSettings[size];
+        var copyComp = finalComp.duplicate();
+        resize(copyComp, config.dimensions);
+        setFramerate(copyComp, config.fps);
+        copyComp.name = '@' + size + '_' + config.dimensions[0] + 'x' + config.dimensions[1]  + '_' + app.project.file.name;
+    }
+
+    // end undo group
+    app.endUndoGroup();
+}
+
+// protoScale(byNameOrActive(exportCompName));
+protoScale(byNameOrActive(exportCompName));
