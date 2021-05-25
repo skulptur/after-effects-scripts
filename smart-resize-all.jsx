@@ -1,14 +1,13 @@
 var scriptName = "Scale by Protobacillus";
-var targetSize = 2000;
-var targetWidth = targetSize;
-var targetHeight = targetSize;
+var baseSize = [2000, 2000];
+var vjLoopSize = [1920, 1080];
 
 // start undo group
 app.beginUndoGroup(scriptName);
 
 // use info panel for debugging
 clearOutput();
-writeLn('Running ' + scriptName);
+writeLn(scriptName);
 
 // adobe sucks and starts with index 1
 function getItem (items, index) {
@@ -22,10 +21,17 @@ function forEach (elements, callback) {
     }
 }
 
+function isComp (element) {
+    return element instanceof CompItem;
+}
+
+function isFolder (element) {
+    return element instanceof FolderItem;
+}
+
 // to visit the layers of a comp
 function forEachLayer (element, callback) {
-    // adjust position of layers
-    if (element instanceof CompItem){
+    if (isComp(element)){
         forEach(element.layers, callback);
     }
 }
@@ -34,47 +40,55 @@ function setPosition (element, x, y) {
     element.transform.position.setValue([x,y]);
 }
 
+function setFramerate (element, frameRate) {
+    if (isComp(element)){
+        element.frameRate = frameRate;
+    }
+}
+
 function scalePosition (element, xFactor, yFactor) {
     var positionValue = element.position.value;
-    write(xFactor + ' - ' + yFactor);
     setPosition(element, positionValue[0] * xFactor, positionValue[1] * yFactor);
 }
 
-// TODO: we should start from base not from "root dir"
 function recursiveVisit(rootItems, callback) {
-    forEach(rootItems, function(currentElement){
-        if(currentElement instanceof FolderItem){
-            return recursiveVisit(currentElement.items, callback);
+    forEach(rootItems, function(currentItem){
+        if(isFolder(currentItem)){
+            return recursiveVisit(currentItem.items, callback);
         }
     
-        callback(currentElement);
+        callback(currentItem);
     })
 }
 
-function resize (currentElement){
-    const xFactor = targetSize / currentElement.width;
-    const yFactor = targetSize / currentElement.height;
+// resize anything with a width and height property
+function resize (currentItem, size){
+    var x = size[0];
+    var y = size[1];
+    var xFactor = x / currentItem.width;
+    var yFactor = y / currentItem.height;
 
     // resize
-    currentElement.width = targetSize;
-    currentElement.height = targetSize;
+    currentItem.width = x;
+    currentItem.height = y;
 
     // adjust position of layers
-    forEachLayer(currentElement, function(layer){
+    forEachLayer(currentItem, function(layer){
         scalePosition(layer, xFactor, yFactor);
     });
-
-    // write(currentElement.name + ',');
 }
 
-var rootItems = app.project.items;
-// we need to start with the base so that it gets scaled properly
-var firstItem = app.project.activeItem;
+// resize all items
+recursiveVisit(app.project.items, function(currentItem){
+    resize(currentItem, baseSize);
+});
 
-resize(firstItem);
-
-// // do the resize for the rest
-// recursiveVisit(rootItems, resize);
+// these is for the selected item only
+var selectedItem = app.project.activeItem;
+if(selectedItem){
+    resize(selectedItem, vjLoopSize);
+    setFramerate(selectedItem, 60);
+}
 
 // end undo group
 app.endUndoGroup();
