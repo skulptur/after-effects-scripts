@@ -21,6 +21,17 @@ function forEach (elements, callback) {
     }
 }
 
+// to get the indices
+function times(iterations, callback) {
+    var result = []
+    
+    for (var i = 0; i < iterations; i++) {
+        result.push(callback(i));
+    }
+    
+    return result
+}
+
 function isComp (element) {
     return element instanceof CompItem;
 }
@@ -78,6 +89,13 @@ function resize (currentItem, size){
     });
 }
 
+function precompLayers(element, compName){
+    if(isComp(element) && element.layers.length > 1){
+        var layerIndices = times(element.numLayers, function(i){ return i + 1});
+        return element.layers.precompose(layerIndices, compName);
+    }
+}
+
 // resize all items
 recursiveVisit(app.project.items, function(currentItem){
     resize(currentItem, baseSize);
@@ -86,8 +104,12 @@ recursiveVisit(app.project.items, function(currentItem){
 // these is for the selected item only
 var selectedItem = app.project.activeItem;
 if(selectedItem){
+    precompLayers(selectedItem, 'final-precomp');
     resize(selectedItem, vjLoopSize);
     setFramerate(selectedItem, 60);
+    selectedItem.name = '@full-hd_' + app.project.file.name
+}else{
+    alert("You need to select the export comp.");
 }
 
 // end undo group
