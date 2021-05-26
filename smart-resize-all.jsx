@@ -130,10 +130,17 @@ function byNameOrActive(compName){
     return myComp
 }
 
+function getFileId(){
+    if(!app.project.file){
+        return '';
+    }
+    return '_' + app.project.file.name;
+}
+
 function prepareExport(comp, settings){
     resize(comp, settings.dimensions);
     setFramerate(comp, settings.fps);
-    comp.name = '@' + settings.name + '_' + settings.dimensions[0] + 'x' + settings.dimensions[1]  + '_' + app.project.file.name;
+    comp.name = '@' + settings.name + '_' + settings.dimensions[0] + 'x' + settings.dimensions[1]  + getFileId();
 }
 
 function protoScale(finalComp){
