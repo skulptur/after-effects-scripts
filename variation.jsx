@@ -22,6 +22,8 @@ var scriptName = "Variation by @protobacillus";
 
     var fx = {
       fractalNoise: "fractalNoise",
+      cellPattern: "cellPattern",
+      turbulentDisplace: "turbulentDisplace",
       colorama: "APC Colorama",
       vectorBlur: "CC Vector Blur",
       hexTile: "CC HexTile",
@@ -58,6 +60,9 @@ var scriptName = "Variation by @protobacillus";
 
           const cleanup = [
             changeEffect(fx.fractalNoise, randomizeSeed(0, 10000, global)),
+            changeEffect(fx.cellPattern, randomizeSeed(0, 10000, global)),
+            changeEffect(fx.turbulentDisplace, randomizeSeed(0, 10000, global)),
+
             changeEffect(fx.colorama, randomizePalette(1, 35, color)),
             changeEffect(fx.vectorBlur, randomizeAngle(0, 360, direction)),
             changeEffect(fx.hexTile, randomizeRadius(3, 1000, sizing)),
@@ -344,11 +349,12 @@ var scriptName = "Variation by @protobacillus";
   }
 
   function createText(panel, name, align) {
-    var statictext1 = panel.add("statictext", undefined, undefined, {
+    var staticText = panel.add("statictext", undefined, undefined, {
       name: name,
     });
-    statictext1.text = name;
-    statictext1.alignment = [align, "top"];
+    staticText.text = name;
+    staticText.alignment = [align, "top"];
+    return staticText;
   }
 
   function buildUI(props) {
