@@ -48,6 +48,11 @@ var scriptName = "Variation by @protobacillus";
       var randomizeDirection = getRandomizer("Direction", state.random);
 
       recursiveVisit(app.project.items, function (currentItem) {
+        // limit to selected items if there is any selection
+        if (app.project.selection.length > 0 && !currentItem.selected) {
+          return;
+        }
+
         forEachLayer(currentItem, function (layer) {
           var changeEffect = getChangeEffect(layer);
 
