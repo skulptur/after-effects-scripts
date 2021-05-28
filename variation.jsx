@@ -14,6 +14,7 @@ var scriptName = "Variation by @protobacillus";
         global: 0.5,
         // all parameters that change size of something
         sizing: 0.5,
+        color: 0.5,
         // all parameters that change angle or direction
         direction: 0.5,
       },
@@ -33,6 +34,7 @@ var scriptName = "Variation by @protobacillus";
       var global = state.mix.global;
       var sizing = state.mix.sizing * state.mix.global;
       var direction = state.mix.direction * state.mix.global;
+      var color = state.mix.color * state.mix.global;
 
       state.random = xoshiro128("" + state.seed);
 
@@ -51,7 +53,7 @@ var scriptName = "Variation by @protobacillus";
 
           const cleanup = [
             changeEffect(fx.fractalNoise, randomizeSeed(0, 10000, global)),
-            changeEffect(fx.colorama, randomizePalette(1, 35, global)),
+            changeEffect(fx.colorama, randomizePalette(1, 35, color)),
             changeEffect(fx.vectorBlur, randomizeAngle(0, 360, direction)),
             changeEffect(fx.hexTile, randomizeRadius(3, 1000, sizing)),
             changeEffect(fx.hexTile, randomizeSmearing(0, 100, global)),
@@ -86,6 +88,9 @@ var scriptName = "Variation by @protobacillus";
       run();
     }
 
+    // run first time
+    run();
+
     buildUI({
       onNext: function () {
         update(state.seed + 1);
@@ -115,6 +120,10 @@ var scriptName = "Variation by @protobacillus";
       },
       onGlobalChange: function (value) {
         state.mix.global = value;
+        update();
+      },
+      onColorChange: function (value) {
+        state.mix.color = value;
         update();
       },
     });
@@ -327,6 +336,7 @@ var scriptName = "Variation by @protobacillus";
     buildPanel(function (myPanel) {
       createText(myPanel, "Randomize", "center");
 
+      createSlider(myPanel, "Color", props.onColorChange);
       createSlider(myPanel, "Size", props.onSizingChange);
       createSlider(myPanel, "Direction", props.onDirectionChange);
       createSlider(myPanel, "Global", props.onGlobalChange);
