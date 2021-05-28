@@ -10,18 +10,20 @@ var scriptName = "Variation by @protobacillus";
       previewCleanup: [], // this is a list of fns to undo preview changes
       mix: {
         blur: 0.5,
-        // for now just colorama
-        color: 0.5,
         // all parameters that change size of something
         sizing: 0.5,
         // all parameters that change angle or direction
         direction: 0.5,
         // mix everything with this
         global: 0.5,
+        // for now just colorama
+        color: 1,
         // turbulent displace, fractal noise, cell pattern...
-        seed: 0,
+        seed: 1,
         // wave warp
-        waveType: 0,
+        waveType: 1,
+        // affect selected items only?
+        selectedOnly: 0,
       },
     };
 
@@ -62,7 +64,11 @@ var scriptName = "Variation by @protobacillus";
 
       recursiveVisit(app.project.items, function (currentItem) {
         // limit to selected items if there is any selection
-        if (app.project.selection.length > 0 && !currentItem.selected) {
+        if (
+          app.project.selection.length > 0 &&
+          state.mix.selectedOnly &&
+          !currentItem.selected
+        ) {
           return;
         }
 
@@ -170,6 +176,10 @@ var scriptName = "Variation by @protobacillus";
         blur: {
           initialValue: state.mix.blur,
           onChange: getMixerChangeHandler("blur"),
+        },
+        selectedOnly: {
+          initialValue: state.mix.selectedOnly,
+          onChange: getMixerChangeHandler("selectedOnly"),
         },
       },
     });
@@ -392,7 +402,7 @@ var scriptName = "Variation by @protobacillus";
 
   function buildUI(props) {
     buildPanel(function (myPanel) {
-      createText(myPanel, "Randomize", "center");
+      createText(myPanel, "Random Amount", "center");
 
       createSlider(myPanel, "Blur", props.mix.blur);
       createSlider(myPanel, "Size", props.mix.sizing);
@@ -404,6 +414,7 @@ var scriptName = "Variation by @protobacillus";
       createCheckbox(checkboxGroup, "Colorama", props.mix.color);
 
       createSlider(myPanel, "Global", props.mix.global);
+      createCheckbox(myPanel, "Selected Only", props.mix.selectedOnly);
 
       var buttonsGroup = createGroup(myPanel, "buttonsGroup");
       createButton(buttonsGroup, "Previous", props.onPrevious);
