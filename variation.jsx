@@ -1,6 +1,6 @@
 var scriptName = "Variation by Protobacillus";
 
-// UTILS
+// Utils
 
 // adobe sucks and starts with index 1
 function getItem (items, index) {
@@ -60,27 +60,45 @@ function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
-function randomizeSeed(seededEffect){
-    seededEffect.property("Random Seed").setValue(randomInt(0, 10000));
-}
-
-function randomizePalette(colorama){
-    colorama.property("Use Preset Palette").setValue(randomInt(1, 35));
-}
-
-function randomizeAngle(effect){
-    effect.property("Angle Offset").setValue(randomInt(0, 360));
-}
-
-function changeEffect(layer, effectName, callback){
-    var effect = layer.property("Effects").property(effectName);
-    if(effect){
-        callback(effect)
+function getRandomizer (property) {
+    return function(min, max){
+        return function(effect){
+            effect.property(property).setValue(randomInt(min, max));    
+        }
     }
-
-    return effect;
 }
 
+function getChangeEffect(layer) {
+    return function(effectName, callback){
+        var effect = layer.property("Effects").property(effectName);
+        if(effect){
+            callback(effect)
+        }
+    
+        return effect;
+    }
+}
+
+// Randomizers
+// TODO: add a mix factor (read value and lerp with randomized one)
+var randomizeSeed = getRandomizer("Random Seed");
+var randomizePalette = getRandomizer("Use Preset Palette");
+var randomizeAngle = getRandomizer("Angle Offset");
+var randomizeRadius = getRandomizer("Radius");
+var randomizeSmearing = getRandomizer("Smearing");
+var randomizeWaveWidth = getRandomizer("Wave Width");
+var randomizeWaveHeight = getRandomizer("Wave Height");
+
+var fx = {
+    fractalNoise: "fractalNoise",
+    colorama: "APC Colorama",
+    vectorBlur: "CC Vector Blur",
+    hexTile: "CC HexTile",
+    waveWarp: "Wave Warp",
+    ripple: "Ripple",
+};
+
+// Main
 function variation(){
     // start undo group
     app.beginUndoGroup(scriptName);
@@ -91,9 +109,19 @@ function variation(){
 
     recursiveVisit(app.project.items, function(currentItem){
         forEachLayer(currentItem, function(layer){
-            changeEffect(layer, "fractalNoise", randomizeSeed);
-            changeEffect(layer, "APC Colorama", randomizePalette);
-            changeEffect(layer, "CC Vector Blur", randomizeAngle);
+            var changeEffect = getChangeEffect(layer);
+
+            changeEffect(fx.fractalNoise, randomizeSeed(0, 10000));
+            changeEffect(fx.colorama, randomizePalette(1, 35));
+            changeEffect(fx.vectorBlur, randomizeAngle(0, 360));
+            changeEffect(fx.hexTile, randomizeRadius(3, 1000));
+            changeEffect(fx.hexTile, randomizeSmearing(0, 100));
+            changeEffect(fx.waveWarp, randomizeWaveWidth(1, 1000));
+            changeEffect(fx.waveWarp, randomizeWaveHeight(-1000, 1000));
+            changeEffect(fx.ripple, randomizeRadius(1, 100));
+            changeEffect(fx.ripple, randomizeWaveWidth(2, 100));
+            changeEffect(fx.ripple, randomizeWaveHeight(2, 100));
+            
         });
     });
 
