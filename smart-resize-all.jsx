@@ -145,7 +145,7 @@ function prepareExport(comp, settings){
 
 function protoScale(finalComp){
     if(!finalComp){
-        return alert("You need to select the export comp.");
+        return alert("Please select the main export comp.");
     }
 
     // start undo group
