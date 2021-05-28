@@ -17,6 +17,10 @@ var scriptName = "Variation by @protobacillus";
         direction: 0.5,
         // mix everything with this
         global: 0.5,
+        // turbulent displace, fractal noise, cell pattern...
+        seed: 0,
+        // wave warp
+        waveType: 0,
       },
     };
 
@@ -24,6 +28,7 @@ var scriptName = "Variation by @protobacillus";
       fractalNoise: "fractalNoise",
       cellPattern: "cellPattern",
       turbulentDisplace: "turbulentDisplace",
+      directionalBlur: "directionalBlur",
       colorama: "APC Colorama",
       vectorBlur: "CC Vector Blur",
       hexTile: "CC HexTile",
@@ -37,6 +42,8 @@ var scriptName = "Variation by @protobacillus";
       var sizing = state.mix.sizing * state.mix.global;
       var direction = state.mix.direction * state.mix.global;
       var color = state.mix.color * state.mix.global;
+      var seed = state.mix.seed * state.mix.global;
+      var waveType = state.mix.waveType * state.mix.global;
 
       state.random = xoshiro128("" + state.seed);
 
@@ -48,6 +55,7 @@ var scriptName = "Variation by @protobacillus";
       var randomizeWaveWidth = getRandomizer("Wave Width", state.random);
       var randomizeWaveHeight = getRandomizer("Wave Height", state.random);
       var randomizeDirection = getRandomizer("Direction", state.random);
+      var randomizeWaveType = getRandomizer("Wave Type", state.random);
 
       recursiveVisit(app.project.items, function (currentItem) {
         // limit to selected items if there is any selection
@@ -59,9 +67,9 @@ var scriptName = "Variation by @protobacillus";
           var changeEffect = getChangeEffect(layer);
 
           const cleanup = [
-            changeEffect(fx.fractalNoise, randomizeSeed(0, 10000, global)),
-            changeEffect(fx.cellPattern, randomizeSeed(0, 10000, global)),
-            changeEffect(fx.turbulentDisplace, randomizeSeed(0, 10000, global)),
+            changeEffect(fx.fractalNoise, randomizeSeed(0, 10000, seed)),
+            changeEffect(fx.cellPattern, randomizeSeed(0, 10000, seed)),
+            changeEffect(fx.turbulentDisplace, randomizeSeed(0, 10000, seed)),
 
             changeEffect(fx.colorama, randomizePalette(1, 35, color)),
             changeEffect(fx.vectorBlur, randomizeAngle(0, 360, direction)),
@@ -69,7 +77,12 @@ var scriptName = "Variation by @protobacillus";
             changeEffect(fx.hexTile, randomizeSmearing(0, 100, global)),
             changeEffect(fx.waveWarp, randomizeWaveWidth(1, 1000, sizing)),
             changeEffect(fx.waveWarp, randomizeWaveHeight(-1000, 1000, sizing)),
+            changeEffect(fx.waveWarp, randomizeWaveType(1, 9, waveType)),
             changeEffect(fx.waveWarp, randomizeDirection(1, 360, direction)),
+            changeEffect(
+              fx.directionalBlur,
+              randomizeDirection(1, 360, direction)
+            ),
             changeEffect(fx.ripple, randomizeRadius(1, 100, sizing)),
             changeEffect(fx.ripple, randomizeWaveWidth(2, 100, sizing)),
             changeEffect(fx.ripple, randomizeWaveHeight(2, 100, sizing)),
@@ -101,6 +114,13 @@ var scriptName = "Variation by @protobacillus";
     // run first time
     run();
 
+    function getMixerChangeHandler(propName) {
+      return function (value) {
+        state.mix[propName] = value;
+        update();
+      };
+    }
+
     buildUI({
       onNext: function () {
         update(state.seed + 1);
@@ -112,42 +132,36 @@ var scriptName = "Variation by @protobacillus";
         // start undo group
         app.beginUndoGroup(scriptName);
 
-        // use info panel for debugging
-        clearOutput();
-        writeLn(scriptName);
         run();
+        state.previewCleanup = [];
 
         // end undo group
         app.endUndoGroup();
       },
       mix: {
         color: {
-          initialValue: state.mix.sizing,
-          onChange: function (value) {
-            state.mix.color = value;
-            update();
-          },
+          initialValue: state.mix.color,
+          onChange: getMixerChangeHandler("color"),
         },
         sizing: {
           initialValue: state.mix.sizing,
-          onChange: function (value) {
-            state.mix.sizing = value;
-            update();
-          },
+          onChange: getMixerChangeHandler("sizing"),
         },
         direction: {
-          initialValue: state.mix.sizing,
-          onChange: function (value) {
-            state.mix.direction = value;
-            update();
-          },
+          initialValue: state.mix.direction,
+          onChange: getMixerChangeHandler("direction"),
         },
         global: {
-          initialValue: state.mix.sizing,
-          onChange: function (value) {
-            state.mix.global = value;
-            update();
-          },
+          initialValue: state.mix.global,
+          onChange: getMixerChangeHandler("global"),
+        },
+        seed: {
+          initialValue: state.mix.seed,
+          onChange: getMixerChangeHandler("seed"),
+        },
+        waveType: {
+          initialValue: state.mix.waveType,
+          onChange: getMixerChangeHandler("waveType"),
         },
       },
     });
@@ -357,17 +371,31 @@ var scriptName = "Variation by @protobacillus";
     return staticText;
   }
 
+  function createCheckbox(group, name, onChange) {
+    var checkbox = group.add("checkbox", undefined, undefined, { name: name });
+    checkbox.text = name;
+    checkbox.onClick = function () {
+      onChange(!!checkbox.value ? 1 : 0);
+    };
+
+    return checkbox;
+  }
+
   function buildUI(props) {
     buildPanel(function (myPanel) {
       createText(myPanel, "Randomize", "center");
 
-      createSlider(myPanel, "Color", props.mix.color.onChange);
       createSlider(myPanel, "Size", props.mix.sizing.onChange);
       createSlider(myPanel, "Direction", props.mix.direction.onChange);
+
+      var checkboxGroup = createGroup(myPanel, "checkboxGroup");
+      createCheckbox(checkboxGroup, "Seed", props.mix.seed.onChange);
+      createCheckbox(checkboxGroup, "Wave Type", props.mix.waveType.onChange);
+      createCheckbox(checkboxGroup, "Colorama", props.mix.color.onChange);
+
       createSlider(myPanel, "Global", props.mix.global.onChange);
 
       var buttonsGroup = createGroup(myPanel, "buttonsGroup");
-
       createButton(buttonsGroup, "Previous", props.onPrevious);
       createButton(buttonsGroup, "Next", props.onNext);
       createButton(buttonsGroup, "Repeat", props.onRepeat);
