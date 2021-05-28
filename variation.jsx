@@ -9,14 +9,14 @@ var scriptName = "Variation by @protobacillus";
       random: xoshiro128("" + initialSeed),
       previewCleanup: [], // this is a list of fns to undo preview changes
       mix: {
-        // IMPORTANT: don't change these without also changing the slider defaults
-        // mix everything with this
-        global: 0.5,
+        // for now just colorama
+        color: 0.5,
         // all parameters that change size of something
         sizing: 0.5,
-        color: 0.5,
         // all parameters that change angle or direction
         direction: 0.5,
+        // mix everything with this
+        global: 0.5,
       },
     };
 
@@ -110,21 +110,35 @@ var scriptName = "Variation by @protobacillus";
         // end undo group
         app.endUndoGroup();
       },
-      onSizingChange: function (value) {
-        state.mix.sizing = value;
-        update();
-      },
-      onDirectionChange: function (value) {
-        state.mix.direction = value;
-        update();
-      },
-      onGlobalChange: function (value) {
-        state.mix.global = value;
-        update();
-      },
-      onColorChange: function (value) {
-        state.mix.color = value;
-        update();
+      mix: {
+        color: {
+          initialValue: state.mix.sizing,
+          onChange: function (value) {
+            state.mix.color = value;
+            update();
+          },
+        },
+        sizing: {
+          initialValue: state.mix.sizing,
+          onChange: function (value) {
+            state.mix.sizing = value;
+            update();
+          },
+        },
+        direction: {
+          initialValue: state.mix.sizing,
+          onChange: function (value) {
+            state.mix.direction = value;
+            update();
+          },
+        },
+        global: {
+          initialValue: state.mix.sizing,
+          onChange: function (value) {
+            state.mix.global = value;
+            update();
+          },
+        },
       },
     });
   }
@@ -336,10 +350,10 @@ var scriptName = "Variation by @protobacillus";
     buildPanel(function (myPanel) {
       createText(myPanel, "Randomize", "center");
 
-      createSlider(myPanel, "Color", props.onColorChange);
-      createSlider(myPanel, "Size", props.onSizingChange);
-      createSlider(myPanel, "Direction", props.onDirectionChange);
-      createSlider(myPanel, "Global", props.onGlobalChange);
+      createSlider(myPanel, "Color", props.mix.color.onChange);
+      createSlider(myPanel, "Size", props.mix.sizing.onChange);
+      createSlider(myPanel, "Direction", props.mix.direction.onChange);
+      createSlider(myPanel, "Global", props.mix.global.onChange);
 
       var buttonsGroup = createGroup(myPanel, "buttonsGroup");
 
