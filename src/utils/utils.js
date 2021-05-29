@@ -78,6 +78,67 @@ function getRandomizer(property, random, t) {
   };
 }
 
+// to visit the layers of a comp
+function forEachLayer(element, callback) {
+  if (isComp(element)) {
+    forEachItem(element.layers, callback);
+  }
+}
+
+function setPosition(element, x, y) {
+  element.transform.position.setValue([x, y]);
+}
+
+function setFramerate(element, frameRate) {
+  if (isComp(element)) {
+    element.frameRate = frameRate;
+  }
+}
+
+function scalePosition(element, xFactor, yFactor) {
+  var positionValue = element.position.value;
+  setPosition(element, positionValue[0] * xFactor, positionValue[1] * yFactor);
+}
+
+// resize anything with a width and height property
+function resize(currentItem, size) {
+  var x = size[0];
+  var y = size[1];
+  var xFactor = x / currentItem.width;
+  var yFactor = y / currentItem.height;
+
+  // resize
+  currentItem.width = x;
+  currentItem.height = y;
+
+  // adjust position of layers
+  forEachLayer(currentItem, function (layer) {
+    scalePosition(layer, xFactor, yFactor);
+  });
+}
+
+function precompLayers(element, compName) {
+  if (isComp(element) && element.layers.length > 1) {
+    var layerIndices = times(element.numLayers, function (i) {
+      return i + 1;
+    });
+    return element.layers.precompose(layerIndices, compName);
+  }
+}
+
+// tries to find item by name, falls back to selected item
+function byNameOrActive(compName) {
+  var myComp = app.project.activeItem;
+  for (var i = 1; i <= app.project.numItems; i++) {
+    var element = app.project.item(i);
+    if (isComp(element) && element.name === compName) {
+      myComp = element;
+      break;
+    }
+  }
+  return myComp;
+}
+
 function noop() {}
 
 function imul(a, b) {
