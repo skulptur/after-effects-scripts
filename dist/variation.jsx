@@ -448,7 +448,6 @@ function getChangeEffect(layer) {
 }
 
 // UI helper functions
-
 function createPanel(createUI) {
   var myPanel =
     thisObj instanceof Panel

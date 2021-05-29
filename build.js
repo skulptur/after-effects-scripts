@@ -2,7 +2,11 @@ var concat = require("concat-files");
 
 function getPaths(paths) {
   var before = ["./src/utils/header.js"];
-  var after = ["./src/utils/utils.js", "./src/utils/footer.js"];
+  var after = [
+    "./src/utils/utils.js",
+    "./src/utils/ui.js",
+    "./src/utils/footer.js",
+  ];
   return before.concat(paths).concat(after);
 }
 
