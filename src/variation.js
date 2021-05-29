@@ -11,6 +11,8 @@ var scriptName = "Variation by @protobacillus";
 // Split into files and join on watch using gulp or a simple webpack config (or even an npm command)
 
 function main() {
+  app.beginUndoGroup(scriptName);
+
   var initialSeed = randomInt(10000, 20000, Math.random);
   var state = {
     seed: initialSeed, // a large number so we can go previous
@@ -156,11 +158,24 @@ function main() {
     });
   }
 
+  function commit() {
+    state.previewCleanup = [];
+  }
+
   function cleanup() {
     forEach(state.previewCleanup, function (callback) {
       callback();
     });
-    state.previewCleanup = [];
+    commit();
+  }
+
+  function apply(isDone) {
+    commit();
+    app.endUndoGroup();
+
+    if (!isDone) {
+      app.beginUndoGroup(scriptName);
+    }
   }
 
   function update(newSeed) {
@@ -175,67 +190,79 @@ function main() {
   // run first time
   run();
 
-  function getMixerChangeHandler(inputName) {
-    return function (value) {
-      state.options[inputName] = value;
-      update();
+  createUI(function (panel) {
+    return {
+      onDone: function () {
+        apply(true);
+        panel.close();
+      },
+      onCancel: function () {
+        cleanup();
+        panel.close();
+      },
+      onNext: function () {
+        update(state.seed + 1);
+      },
+      onPrevious: function () {
+        update(state.seed - 1);
+      },
+      onRepeat: function () {
+        run();
+        apply(false);
+      },
+      getUiProps: function (inputName) {
+        return {
+          initialValue: state.options[inputName],
+          onChange: function (value) {
+            state.options[inputName] = value;
+            update();
+          },
+        };
+      },
     };
-  }
-
-  createUI({
-    onNext: function () {
-      update(state.seed + 1);
-    },
-    onPrevious: function () {
-      update(state.seed - 1);
-    },
-    onRepeat: function () {
-      // start undo group
-      app.beginUndoGroup(scriptName);
-
-      run();
-      state.previewCleanup = [];
-
-      // end undo group
-      app.endUndoGroup();
-    },
-    getUiProps: function (inputName) {
-      return {
-        initialValue: state.options[inputName],
-        onChange: getMixerChangeHandler(inputName),
-      };
-    },
   });
+
+  function createUI(getProps) {
+    createPanel(function (myPanel) {
+      var props = getProps(myPanel);
+
+      createText(myPanel, "Random Amount", "center");
+
+      createSlider(myPanel, "Blur", props.getUiProps("blur"));
+      createSlider(myPanel, "Size", props.getUiProps("sizing"));
+      createSlider(myPanel, "Direction", props.getUiProps("direction"));
+
+      var checkboxGroup = createGroup(myPanel, "checkboxGroup");
+      createCheckbox(checkboxGroup, "Seed", props.getUiProps("seed"));
+      createCheckbox(checkboxGroup, "Wave Type", props.getUiProps("waveType"));
+      createCheckbox(checkboxGroup, "Colorama", props.getUiProps("color"));
+      createCheckbox(
+        myPanel,
+        "Kaleida Mirroring",
+        props.getUiProps("kaleidaMirroring")
+      );
+
+      createSlider(myPanel, "Global", props.getUiProps("global"));
+      createCheckbox(
+        myPanel,
+        "Selected Only",
+        props.getUiProps("selectedOnly")
+      );
+
+      var buttonsGroup = createGroup(myPanel, "buttonsGroup");
+      createButton(buttonsGroup, "Previous", props.onPrevious);
+      createButton(buttonsGroup, "Next", props.onNext);
+      createButton(buttonsGroup, "Repeat", props.onRepeat);
+
+      var actionButtonsGroup = createGroup(myPanel, "actionButtonsGroup");
+      createButton(actionButtonsGroup, "Cancel", function () {
+        props.onCancel(myPanel);
+      });
+      createButton(actionButtonsGroup, "Done", function () {
+        props.onDone(myPanel);
+      });
+    });
+  }
 }
 
 main();
-
-// UI
-
-function createUI(props) {
-  createPanel(function (myPanel) {
-    createText(myPanel, "Random Amount", "center");
-
-    createSlider(myPanel, "Blur", props.getUiProps("blur"));
-    createSlider(myPanel, "Size", props.getUiProps("sizing"));
-    createSlider(myPanel, "Direction", props.getUiProps("direction"));
-
-    var checkboxGroup = createGroup(myPanel, "checkboxGroup");
-    createCheckbox(checkboxGroup, "Seed", props.getUiProps("seed"));
-    createCheckbox(checkboxGroup, "Wave Type", props.getUiProps("waveType"));
-    createCheckbox(checkboxGroup, "Colorama", props.getUiProps("color"));
-    createCheckbox(
-      myPanel,
-      "Kaleida Mirroring",
-      props.getUiProps("kaleidaMirroring")
-    );
-
-    createSlider(myPanel, "Global", props.getUiProps("global"));
-    createCheckbox(myPanel, "Selected Only", props.getUiProps("selectedOnly"));
-
-    var buttonsGroup = createGroup(myPanel, "buttonsGroup");
-    createButton(buttonsGroup, "Previous", props.onPrevious);
-    createButton(buttonsGroup, "Next", props.onNext);
-    createButton(buttonsGroup, "Repeat", props.onRepeat);
-  });
-}
