@@ -8,7 +8,7 @@ var scriptName = "Variation by @protobacillus";
       seed: initialSeed, // a large number so we can go previous
       random: xoshiro128("" + initialSeed),
       previewCleanup: [], // this is a list of fns to undo preview changes
-      mix: {
+      options: {
         blur: 0.5,
         // all parameters that change size of something
         sizing: 0.5,
@@ -41,13 +41,13 @@ var scriptName = "Variation by @protobacillus";
 
     // Randomize the params
     function run() {
-      var global = state.mix.global;
-      var sizing = state.mix.sizing * state.mix.global;
-      var direction = state.mix.direction * state.mix.global;
-      var color = state.mix.color * state.mix.global;
-      var seed = state.mix.seed * state.mix.global;
-      var waveType = state.mix.waveType * state.mix.global;
-      var blur = state.mix.blur * state.mix.global;
+      var global = state.options.global;
+      var sizing = state.options.sizing * state.options.global;
+      var direction = state.options.direction * state.options.global;
+      var color = state.options.color * state.options.global;
+      var seed = state.options.seed * state.options.global;
+      var waveType = state.options.waveType * state.options.global;
+      var blur = state.options.blur * state.options.global;
 
       state.random = xoshiro128("" + state.seed);
 
@@ -66,7 +66,7 @@ var scriptName = "Variation by @protobacillus";
         // limit to selected items if there is any selection
         if (
           app.project.selection.length > 0 &&
-          state.mix.selectedOnly &&
+          state.options.selectedOnly &&
           !currentItem.selected
         ) {
           return;
@@ -126,7 +126,7 @@ var scriptName = "Variation by @protobacillus";
 
     function getMixerChangeHandler(propName) {
       return function (value) {
-        state.mix[propName] = value;
+        state.options[propName] = value;
         update();
       };
     }
@@ -148,37 +148,37 @@ var scriptName = "Variation by @protobacillus";
         // end undo group
         app.endUndoGroup();
       },
-      mix: {
+      options: {
         color: {
-          initialValue: state.mix.color,
+          initialValue: state.options.color,
           onChange: getMixerChangeHandler("color"),
         },
         sizing: {
-          initialValue: state.mix.sizing,
+          initialValue: state.options.sizing,
           onChange: getMixerChangeHandler("sizing"),
         },
         direction: {
-          initialValue: state.mix.direction,
+          initialValue: state.options.direction,
           onChange: getMixerChangeHandler("direction"),
         },
         global: {
-          initialValue: state.mix.global,
+          initialValue: state.options.global,
           onChange: getMixerChangeHandler("global"),
         },
         seed: {
-          initialValue: state.mix.seed,
+          initialValue: state.options.seed,
           onChange: getMixerChangeHandler("seed"),
         },
         waveType: {
-          initialValue: state.mix.waveType,
+          initialValue: state.options.waveType,
           onChange: getMixerChangeHandler("waveType"),
         },
         blur: {
-          initialValue: state.mix.blur,
+          initialValue: state.options.blur,
           onChange: getMixerChangeHandler("blur"),
         },
         selectedOnly: {
-          initialValue: state.mix.selectedOnly,
+          initialValue: state.options.selectedOnly,
           onChange: getMixerChangeHandler("selectedOnly"),
         },
       },
@@ -404,17 +404,17 @@ var scriptName = "Variation by @protobacillus";
     buildPanel(function (myPanel) {
       createText(myPanel, "Random Amount", "center");
 
-      createSlider(myPanel, "Blur", props.mix.blur);
-      createSlider(myPanel, "Size", props.mix.sizing);
-      createSlider(myPanel, "Direction", props.mix.direction);
+      createSlider(myPanel, "Blur", props.options.blur);
+      createSlider(myPanel, "Size", props.options.sizing);
+      createSlider(myPanel, "Direction", props.options.direction);
 
       var checkboxGroup = createGroup(myPanel, "checkboxGroup");
-      createCheckbox(checkboxGroup, "Seed", props.mix.seed);
-      createCheckbox(checkboxGroup, "Wave Type", props.mix.waveType);
-      createCheckbox(checkboxGroup, "Colorama", props.mix.color);
+      createCheckbox(checkboxGroup, "Seed", props.options.seed);
+      createCheckbox(checkboxGroup, "Wave Type", props.options.waveType);
+      createCheckbox(checkboxGroup, "Colorama", props.options.color);
 
-      createSlider(myPanel, "Global", props.mix.global);
-      createCheckbox(myPanel, "Selected Only", props.mix.selectedOnly);
+      createSlider(myPanel, "Global", props.options.global);
+      createCheckbox(myPanel, "Selected Only", props.options.selectedOnly);
 
       var buttonsGroup = createGroup(myPanel, "buttonsGroup");
       createButton(buttonsGroup, "Previous", props.onPrevious);
