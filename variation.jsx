@@ -1,5 +1,15 @@
 var scriptName = "Variation by @protobacillus";
 
+// TODO:
+// A/B button to compare but also to navigate (choose A or B to apply small changes)
+// Another slider for amount of detail
+// Brightness/Contrast/Vibrance/Saturation sliders that work without randomizing so adjustments can be made
+// Slider to control change of skipping an effect
+// Degrade: randomly disable effects with a slider
+// Add more effects options
+// Auto generate previews: put whole project in folder in case it isnt, then duplicate it deeply X times, each time automatically generating a variation. Then setup a comp that has 1 frame of each variation to preview easily
+// Split into files and join on watch using gulp or a simple webpack config (or even an npm command)
+
 (function (thisObj) {
   // Main
   function main() {
