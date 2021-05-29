@@ -10,7 +10,6 @@ var scriptName = "Variation by @protobacillus";
 // Auto generate previews: put whole project in folder in case it isnt, then duplicate it deeply X times, each time automatically generating a variation. Then setup a comp that has 1 frame of each variation to preview easily
 // Split into files and join on watch using gulp or a simple webpack config (or even an npm command)
 
-// Main
 function main() {
   var initialSeed = randomInt(10000, 20000, Math.random);
   var state = {
