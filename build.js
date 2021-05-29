@@ -24,4 +24,5 @@ function build(filePaths, name) {
 }
 
 build(["./src/variation.js"], "variation");
+build(["./src/randomizer.js"], "randomizer");
 build(["./src/smart-resize-all.js"], "smart-resize-all");

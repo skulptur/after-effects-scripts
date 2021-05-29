@@ -255,12 +255,8 @@ function main() {
       createButton(buttonsGroup, "Repeat", props.onRepeat);
 
       var actionButtonsGroup = createGroup(myPanel, "actionButtonsGroup");
-      createButton(actionButtonsGroup, "Cancel", function () {
-        props.onCancel(myPanel);
-      });
-      createButton(actionButtonsGroup, "Done", function () {
-        props.onDone(myPanel);
-      });
+      createButton(actionButtonsGroup, "Cancel", props.onCancel);
+      createButton(actionButtonsGroup, "Done", props.onDone);
     });
   }
 }
