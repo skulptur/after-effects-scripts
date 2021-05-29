@@ -1,3 +1,5 @@
+// UI UTILS
+
 function createPanel(createUI) {
   var myPanel =
     thisObj instanceof Panel

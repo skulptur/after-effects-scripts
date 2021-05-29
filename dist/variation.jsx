@@ -242,38 +242,17 @@ function createUI(props) {
     createButton(buttonsGroup, "Repeat", props.onRepeat);
   });
 }
-// UTILS
+// AFTER EFFECTS SPECIFIC UTILS
 
-function lerp(v0, v1, t) {
-  return v0 * (1 - t) + v1 * t;
-}
-
-// adobe sucks and starts with index 1
 function getItem(items, index) {
+  // adobe sucks and starts with index 1
   return items[index + 1];
-}
-
-function forEach(elements, callback) {
-  for (var i = 0; i < elements.length; i++) {
-    callback(elements[i], i);
-  }
 }
 
 function forEachItem(elements, callback) {
   for (var i = 0; i < elements.length; i++) {
     callback(getItem(elements, i), i);
   }
-}
-
-// to get the indices
-function times(iterations, callback) {
-  var result = [];
-
-  for (var i = 0; i < iterations; i++) {
-    result.push(callback(i));
-  }
-
-  return result;
 }
 
 function isComp(element) {
@@ -284,14 +263,15 @@ function isFolder(element) {
   return element instanceof FolderItem;
 }
 
-// to visit the layers of a comp
 function forEachLayer(element, callback) {
+  // to visit the layers of a comp
   if (isComp(element)) {
     forEachItem(element.layers, callback);
   }
 }
 
 function recursiveVisit(rootItems, callback) {
+  // visit items in the project
   forEachItem(rootItems, function (currentItem) {
     if (isFolder(currentItem)) {
       return recursiveVisit(currentItem.items, callback);
@@ -301,12 +281,8 @@ function recursiveVisit(rootItems, callback) {
   });
 }
 
-// min and max included
-function randomInt(min, max, random) {
-  return Math.floor(random() * (max - min + 1) + min);
-}
-
 function getRandomizer(property, random, t) {
+  // effect param randomizer
   return function (min, max) {
     return function (effect) {
       var propValue = effect.property(property).value;
@@ -370,8 +346,8 @@ function precompLayers(element, compName) {
   }
 }
 
-// tries to find item by name, falls back to selected item
 function byNameOrActive(compName) {
+  // tries to find item by name, falls back to selected item
   var myComp = app.project.activeItem;
   for (var i = 1; i <= app.project.numItems; i++) {
     var element = app.project.item(i);
@@ -383,8 +359,16 @@ function byNameOrActive(compName) {
   return myComp;
 }
 
-function noop() {}
+function getChangeEffect(layer) {
+  return function (effectName, callback) {
+    var effect = layer.property("Effects").property(effectName);
+    if (effect) {
+      return callback(effect);
+    }
 
+    return noop;
+  };
+}
 function imul(a, b) {
   var aHi = (a >>> 16) & 0xffff;
   var aLo = a & 0xffff;
@@ -435,19 +419,8 @@ function xoshiro128(seed) {
     return (r >>> 0) / 4294967296;
   };
 }
+// UI UTILS
 
-function getChangeEffect(layer) {
-  return function (effectName, callback) {
-    var effect = layer.property("Effects").property(effectName);
-    if (effect) {
-      return callback(effect);
-    }
-
-    return noop;
-  };
-}
-
-// UI helper functions
 function createPanel(createUI) {
   var myPanel =
     thisObj instanceof Panel
@@ -533,5 +506,32 @@ function createCheckbox(group, name, props) {
 
   return checkbox;
 }
+// UTILS
+function lerp(v0, v1, t) {
+  return v0 * (1 - t) + v1 * t;
+}
+
+function forEach(elements, callback) {
+  for (var i = 0; i < elements.length; i++) {
+    callback(elements[i], i);
+  }
+}
+
+function times(iterations, callback) {
+  var result = [];
+
+  for (var i = 0; i < iterations; i++) {
+    result.push(callback(i));
+  }
+
+  return result;
+}
+
+function randomInt(min, max, random) {
+  // min and max included
+  return Math.floor(random() * (max - min + 1) + min);
+}
+
+function noop() {}
 
 })(this);
