@@ -1,0 +1,26 @@
+{
+  "name": "after-effects-scripts",
+  "version": "0.1.0",
+  "description": "",
+  "main": "src/variation.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.js",
+    "start": "watch 'yarn build' src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skulptur/after-effects-scripts.git"
+  },
+  "keywords": [],
+  "author": "skulptur",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/skulptur/after-effects-scripts/issues"
+  },
+  "homepage": "https://github.com/skulptur/after-effects-scripts#readme",
+  "dependencies": {
+    "concat-files": "^0.1.1",
+    "watch": "^1.0.2"
+  }
+}

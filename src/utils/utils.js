@@ -1,0 +1,231 @@
+// UTILS
+
+function lerp(v0, v1, t) {
+  return v0 * (1 - t) + v1 * t;
+}
+
+// adobe sucks and starts with index 1
+function getItem(items, index) {
+  return items[index + 1];
+}
+
+function forEach(elements, callback) {
+  for (var i = 0; i < elements.length; i++) {
+    callback(elements[i], i);
+  }
+}
+
+function forEachItem(elements, callback) {
+  for (var i = 0; i < elements.length; i++) {
+    callback(getItem(elements, i), i);
+  }
+}
+
+// to get the indices
+function times(iterations, callback) {
+  var result = [];
+
+  for (var i = 0; i < iterations; i++) {
+    result.push(callback(i));
+  }
+
+  return result;
+}
+
+function isComp(element) {
+  return element instanceof CompItem;
+}
+
+function isFolder(element) {
+  return element instanceof FolderItem;
+}
+
+// to visit the layers of a comp
+function forEachLayer(element, callback) {
+  if (isComp(element)) {
+    forEachItem(element.layers, callback);
+  }
+}
+
+function recursiveVisit(rootItems, callback) {
+  forEachItem(rootItems, function (currentItem) {
+    if (isFolder(currentItem)) {
+      return recursiveVisit(currentItem.items, callback);
+    }
+
+    callback(currentItem);
+  });
+}
+
+// min and max included
+function randomInt(min, max, random) {
+  return Math.floor(random() * (max - min + 1) + min);
+}
+
+function getRandomizer(property, random, t) {
+  return function (min, max) {
+    return function (effect) {
+      var propValue = effect.property(property).value;
+      var value = Math.round(lerp(propValue, randomInt(min, max, random), t));
+
+      effect.property(property).setValue(value);
+
+      // to undo
+      return function () {
+        effect.property(property).setValue(propValue);
+      };
+    };
+  };
+}
+
+function noop() {}
+
+function imul(a, b) {
+  var aHi = (a >>> 16) & 0xffff;
+  var aLo = a & 0xffff;
+  var bHi = (b >>> 16) & 0xffff;
+  var bLo = b & 0xffff;
+  // the shift by 0 fixes the sign on the high part
+  // the final |0 converts the unsigned value into a signed value
+  return (aLo * bLo + (((aHi * bLo + aLo * bHi) << 16) >>> 0)) | 0;
+}
+
+function seedGenerator(seed) {
+  var h = 2166136261 >>> 0;
+
+  for (var i = 0; i < seed.length; i++) {
+    h = imul(h ^ seed.charCodeAt(i), 16777619);
+  }
+
+  return function () {
+    h += h << 13;
+    h ^= h >>> 7;
+    h += h << 3;
+    h ^= h >>> 17;
+
+    return (h += h << 5) >>> 0;
+  };
+}
+
+function xoshiro128(seed) {
+  const getSeed = seedGenerator(seed);
+  var a = getSeed();
+  var b = getSeed();
+  var c = getSeed();
+  var d = getSeed();
+
+  return function () {
+    const t = b << 9;
+    var r = a * 5;
+
+    r = (r << 7) | ((r >>> 25) * 9);
+
+    c ^= a;
+    d ^= b;
+    b ^= c;
+    a ^= d;
+    c ^= t;
+    d = (d << 11) | (d >>> 21);
+
+    return (r >>> 0) / 4294967296;
+  };
+}
+
+function getChangeEffect(layer) {
+  return function (effectName, callback) {
+    var effect = layer.property("Effects").property(effectName);
+    if (effect) {
+      return callback(effect);
+    }
+
+    return noop;
+  };
+}
+
+// UI helper functions
+
+function createPanel(createUI) {
+  var myPanel =
+    thisObj instanceof Panel
+      ? thisObj
+      : new Window("window", scriptName, undefined, {
+          resizeable: true,
+        });
+
+  myPanel.orientation = "column";
+  myPanel.alignChildren = ["center", "top"];
+  myPanel.spacing = 10;
+  myPanel.margins = 16;
+
+  createUI(myPanel);
+
+  myPanel.onResizing = myPanel.onResize = function () {
+    this.layout.resize();
+  };
+  if (myPanel instanceof Window) {
+    myPanel.center();
+    myPanel.show();
+  } else {
+    myPanel.layout.layout(true);
+    myPanel.layout.resize();
+  }
+}
+
+function createGroup(panel, name) {
+  const group = panel.add("group", undefined, { name: name });
+  group.orientation = "row";
+  group.alignChildren = ["left", "center"];
+  group.spacing = 10;
+  group.margins = 0;
+  return group;
+}
+
+function createButton(panel, name, onClick) {
+  var randomizeButton = panel.add("button", undefined, undefined, {
+    name: name,
+  });
+  randomizeButton.text = name;
+  randomizeButton.onClick = onClick;
+}
+
+function createSlider(panel, name, props) {
+  var label = panel.add("staticText", undefined, undefined, {
+    name: name + "Label",
+  });
+  label.text = name;
+  label.alignment = ["left", "top"];
+
+  var slider = panel.add("slider", undefined, undefined, undefined, undefined, {
+    name: name,
+  });
+  //   slider.helpTip = "Weight";
+  slider.minvalue = 0;
+  slider.maxvalue = 100;
+  slider.value = props.initialValue * 100;
+  slider.preferredSize.width = 250;
+  slider.onChange = function () {
+    props.onChange(slider.value / 100);
+  };
+
+  return slider;
+}
+
+function createText(panel, name, align) {
+  var staticText = panel.add("statictext", undefined, undefined, {
+    name: name,
+  });
+  staticText.text = name;
+  staticText.alignment = [align, "top"];
+  return staticText;
+}
+
+function createCheckbox(group, name, props) {
+  var checkbox = group.add("checkbox", undefined, undefined, { name: name });
+  checkbox.text = name;
+  checkbox.value = props.initialValue > 0;
+  checkbox.onClick = function () {
+    props.onChange(!!checkbox.value ? 1 : 0);
+  };
+
+  return checkbox;
+}
