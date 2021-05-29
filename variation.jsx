@@ -21,17 +21,26 @@ var scriptName = "Variation by @protobacillus";
       },
     };
 
+    function globalFactor(option) {
+      return option * state.options.global;
+    }
+
+    function globalOff(option) {
+      return state.options.global === 0 ? 0 : option;
+    }
+
     // Randomize the params
     function run() {
       var mix = {
+        blur: globalFactor(state.options.blur),
+        sizing: globalFactor(state.options.sizing),
+        direction: globalFactor(state.options.direction),
         global: state.options.global,
-        sizing: state.options.sizing * state.options.global,
-        direction: state.options.direction * state.options.global,
-        color: state.options.color * state.options.global,
-        seed: state.options.seed * state.options.global,
-        waveType: state.options.waveType * state.options.global,
-        blur: state.options.blur * state.options.global,
-        kaleidaMirroring: state.options.kaleidaMirroring * state.options.global,
+        // global off because the ones below are discontinuous
+        color: globalOff(state.options.color),
+        seed: globalOff(state.options.seed),
+        waveType: globalOff(state.options.waveType),
+        kaleidaMirroring: globalOff(state.options.kaleidaMirroring),
       };
 
       state.random = xoshiro128("" + state.seed);
